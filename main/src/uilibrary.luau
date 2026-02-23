@@ -510,10 +510,11 @@ local Library do
 
             local ResizeButton = Instances:Create("ImageButton", {
 				Parent = Gui,
-                Image = "rbxassetid://115952163051681",
+                Image = "rbxassetid://72577522523901",
 				AnchorPoint = Vector2New(1, 1),
 				BorderColor3 = FromRGB(0, 0, 0),
 				Size = UDim2New(0, 6, 0, 6),
+                ImageColor3 = FromHex("#461875"),
 				Position = UDim2New(1, -4, 1, -4),
                 Name = "\0",
 				BorderSizePixel = 0,
