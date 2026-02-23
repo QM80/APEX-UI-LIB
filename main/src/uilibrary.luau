@@ -77,10 +77,10 @@ local Library do
         },
 
         Images = {
-            ["Saturation"] = {"Saturation.png", "https://github.com/sametexe001/images/blob/main/saturation.png?raw=true" },
-            ["Value"] = { "Value.png", "https://github.com/sametexe001/images/blob/main/value.png?raw=true" },
-            ["Hue"] = { "Hue.png", "https://github.com/sametexe001/images/blob/main/horizontalhue.png?raw=true" },
-            ["Checkers"] = { "Checkers.png", "https://github.com/sametexe001/images/blob/main/checkers.png?raw=true" },
+            ["Saturation"] = {"Saturation.png", "https://github.com/QM80/APEX-UI-LIB/blob/main/main/images/saturation.png?raw=true" },
+            ["Value"] = { "Value.png", "https://github.com/QM80/APEX-UI-LIB/blob/main/main/images/value.png?raw=true" },
+            ["Hue"] = { "Hue.png", "https://github.com/QM80/APEX-UI-LIB/blob/main/main/images/horizontalhue.png?raw=true" },
+            ["Checkers"] = { "Checkers.png", "https://github.com/QM80/APEX-UI-LIB/blob/main/main/images/checkers.png?raw=true" },
         },
 
         -- Ignore below
@@ -6521,4 +6521,5 @@ local Library do
 end
 
 getgenv().Library = Library
+
 return Library
