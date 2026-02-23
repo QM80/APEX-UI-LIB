@@ -352,4 +352,6 @@ do
     end
 end
 
-Library:Notification("Loaded!", "Menu took "..string.format("%.4f", os.clock() - LoadTick).." seconds to load", 5)
+local LoadTick = os.clock()
+
+Library:Notification("Loaded!", "Menu took " .. string.format("%.4f", os.clock() - LoadTick) .. " seconds to load", 5)
