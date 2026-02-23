@@ -1,4 +1,4 @@
-local Library = loadstring(game:HttpGet("https://pastes.io/raw/dsas"))()
+local Library = loadstring(game:HttpGet("https://raw.githubusercontent.com/QM80/APEX-UI-LIB/refs/heads/main/main/src/uilibrary.luau"))()
 
 local Window = Library:Window({
     FadeTime = 0.3,
