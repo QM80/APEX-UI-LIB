@@ -1,13 +1,33 @@
-local Library = loadstring(game:HttpGet("https://raw.githubusercontent.com/QM80/APEX-UI-LIB/refs/heads/main/main/src/uilibrary.luau"))()
+local Library = loadstring(game:HttpGet("https://pastes.io/raw/dsas"))()
 
 local Window = Library:Window({
     FadeTime = 0.3,
-    UITitle = "Example UI",
+    UITitle = "Example ",
 })
 
-local Watermark = Library:Watermark("This is a watermark")
+local fps = 0
+local ping = 0
+local frameCount = 0
+local lastUpdate = tick()
+local plr = game:GetService("Players").LocalPlayer
+
+local Watermark = Library:Watermark("0 FPS | 0 ms")
 local KeybindList = Library:KeybindList()
 
+game:GetService("RunService").RenderStepped:Connect(function()
+    frameCount += 1
+    
+    local now = tick()
+    if now - lastUpdate >= 0.5 then
+        fps = frameCount
+        frameCount = 0
+        lastUpdate = now
+        
+        ping = math.floor(game:GetService("Stats").Network.ServerStatsItem["Data Ping"]:GetValue())
+        
+        Watermark:SetText(fps .. " FPS | " .. ping .. " ms | " .. plr.Name .. " ( " .. plr.UserId .. " )")
+    end
+end)
 do 
     local CombatPage = Window:Page({Name = "Combat", SubPages = true})
     local PlayerPage = Window:Page({Name = "Player", Columns = 2})
