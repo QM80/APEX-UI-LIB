@@ -5153,6 +5153,15 @@ local Library do
             })  Items["Search"]:AddToTheme({BackgroundColor3 = "Background", BorderColor3 = "Border"})
 
 
+            Items["SearchStroke"] = Instances:Create("UIStroke", {
+                Parent = Items["Search"].Instance,
+                Name = "\0",
+                Color = FromRGB(42, 49, 45),
+                Transparency = 0.4,
+                LineJoinMode = Enum.LineJoinMode.Miter,
+                ApplyStrokeMode = Enum.ApplyStrokeMode.Border
+            })  Items["SearchStroke"]:AddToTheme({Color = "Outline"})
+
             Items["Input"] = Instances:Create("TextBox", {
                 Parent = Items["Search"].Instance,
                 Name = "\0",
@@ -6325,7 +6334,7 @@ local Library do
             })
 
             Items["Text"] = Instances:Create("TextLabel", {
-                Parent = Items["Label"].Instance,
+                Parent = Items["BlankElement"].Instance,
                 Name = "\0",
                 FontFace = Library.Font,
                 TextColor3 = FromRGB(235, 235, 235),
