@@ -231,23 +231,26 @@ local Library do
     Library.Theme = TableClone(Themes["Preset"])
 
     -- Folders
-    for Index, Value in Library.Folders do 
-        if not isfolder(Value) then
-            makefolder(Value)
-        end
-    end
-
-    -- Images
-    for Index, Value in Library.Images do 
-        local ImageData = Value
-
-        local ImageName = ImageData[1]
-        local ImageLink = ImageData[2]
-        
-        if not isfile(Library.Folders.Assets .. "/" .. ImageName) then
-            writefile(Library.Folders.Assets .. "/" .. ImageName, game:HttpGet(ImageLink))
-        end
-    end
+	function Library:SetFolder(folderName)
+	    self.Folders.Directory = folderName
+	    self.Folders.Configs = folderName .. "/Configs"
+	    self.Folders.Assets = folderName .. "/Assets"
+	
+	    for _, path in self.Folders do
+	        if not isfolder(path) then
+	            makefolder(path)
+	        end
+	    end
+	
+	    for _, imageData in self.Images do
+	        local imageName = imageData[1]
+	        local imageLink = imageData[2]
+	
+	        if not isfile(self.Folders.Assets .. "/" .. imageName) then
+	            writefile(self.Folders.Assets .. "/" .. imageName, game:HttpGet(imageLink))
+	        end
+	    end
+	end
 
     -- Tweening
     local Tween = { } do
