@@ -70,12 +70,6 @@ local Library do
 
         FadeSpeed = 0.2,
 
-        Folders = {
-            Directory = "Apex",
-            Configs = "Apex/Configs",
-            Assets = "Apex/Assets",
-        },
-
         Images = {
             ["Saturation"] = {"Saturation.png", "https://github.com/QM80/APEX-UI-LIB/blob/main/main/images/saturation.png?raw=true" },
             ["Value"] = { "Value.png", "https://github.com/QM80/APEX-UI-LIB/blob/main/main/images/value.png?raw=true" },
