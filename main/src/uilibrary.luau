@@ -61,6 +61,11 @@ local Library do
 
         MenuKeybind = tostring(Enum.KeyCode.RightControl), 
         Flags = { },
+		Folders = {
+	        Directory = "main/",
+	        Configs = "config/",
+	        Assets = "assets/"
+    	},
 
         Tween = {
             Time = 0.2,
@@ -729,7 +734,9 @@ local Library do
         end
     end
 
+	Library:SetFolder("ApexLib")
     -- Custom font
+
     local CustomFont = { } do
         function CustomFont:New(Name, Weight, Style, Data)
             if isfile(Library.Folders.Assets .. "/" .. Name .. ".json") then
