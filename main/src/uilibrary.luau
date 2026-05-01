@@ -734,7 +734,6 @@ local Library do
         end
     end
 
-	Library:SetFolder("ApexLib")
     -- Custom font
 
     local CustomFont = { } do
