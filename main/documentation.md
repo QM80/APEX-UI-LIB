@@ -1,558 +1,564 @@
-# APEX UI Library — Documentation
+# APEX UI Library
 
-> A Roblox UI library for building feature-rich exploit menus with pages, sections, and components.
+A feature-rich, themeable Roblox UI library for creating in-game menus with pages, sections, and a wide range of interactive components.
 
 ---
 
 ## Table of Contents
 
-- [Installation](#installation)
+- [Setup](#setup)
 - [Window](#window)
-- [Watermark](#watermark)
-- [KeybindList](#keybindlist)
-- [Pages](#pages)
-  - [SubPages](#subpages)
-  - [Settings Page](#settings-page)
+- [Pages & SubPages](#pages--subpages)
 - [Sections](#sections)
 - [Components](#components)
   - [Toggle](#toggle)
+  - [Button](#button)
   - [Slider](#slider)
   - [Dropdown](#dropdown)
-  - [Button](#button)
+  - [Searchbox](#searchbox)
+  - [Textbox](#textbox)
+  - [Label](#label)
   - [Colorpicker](#colorpicker)
   - [Keybind](#keybind)
-  - [Searchbox](#searchbox)
-  - [Playerlist](#playerlist)
-- [Notifications](#notifications)
+- [Extras](#extras)
+  - [Watermark](#watermark)
+  - [Keybind List](#keybind-list)
+  - [Notifications](#notifications)
+  - [Settings Page](#settings-page)
+- [Theming](#theming)
+- [Flags & Config System](#flags--config-system)
+- [Unloading](#unloading)
 
 ---
 
-## Installation
+## Setup
 
-Load the library at the top of your script using `loadstring` and `HttpGet`.
+Call `Library:SetFolder` before creating any UI. This sets up the directory structure and downloads required assets (images, font).
 
 ```lua
-local Library = loadstring(game:HttpGet("https://raw.githubusercontent.com/QM80/APEX-UI-LIB/refs/heads/main/main/src/uilibrary.luau"))()
+Library:SetFolder("MyCheat")
 ```
+
+This creates the following folders:
+- `MyCheat/` — root directory
+- `MyCheat/Configs` — saved configs
+- `MyCheat/Assets` — images and font files
 
 ---
 
 ## Window
 
-The `Window` is the root container for your entire UI. Create it right after loading the library.
+The entry point for all UI. Creates the main draggable, resizable window.
 
 ```lua
 local Window = Library:Window({
-    FadeTime = 0.3,
-    UITitle = "My Script",
+    Size = UDim2.new(0, 609, 0, 507),  -- optional
+    FadeTime = 0.4,                     -- optional
+    UITitle = "My Script",              -- optional, shown in title bar
 })
 ```
 
-| Property | Type | Description |
-|---|---|---|
-| `FadeTime` | `number` | How long (in seconds) the UI takes to fade in/out |
-| `UITitle` | `string` | The title displayed at the top of the window |
-
----
-
-## Watermark
-
-A small overlay that displays live info like FPS, ping, and player name.
+### `Window:SetOpen(bool)`
+Manually show or hide the window. The menu keybind (default `RightControl`) toggles it automatically.
 
 ```lua
-local Watermark = Library:Watermark("0 FPS | 0 ms")
-```
-
-### Methods
-
-```lua
-Watermark:SetText("60 FPS | 12 ms | PlayerName ( 123456 )")
-```
-
-### Live FPS & Ping Example
-
-```lua
-local fps = 0
-local ping = 0
-local frameCount = 0
-local lastUpdate = tick()
-local plr = game:GetService("Players").LocalPlayer
-
-game:GetService("RunService").RenderStepped:Connect(function()
-    frameCount += 1
-
-    local now = tick()
-    if now - lastUpdate >= 0.5 then
-        fps = frameCount
-        frameCount = 0
-        lastUpdate = now
-
-        ping = math.floor(game:GetService("Stats").Network.ServerStatsItem["Data Ping"]:GetValue())
-
-        Watermark:SetText(fps .. " FPS | " .. ping .. " ms | " .. plr.Name .. " ( " .. plr.UserId .. " )")
-    end
-end)
+Window:SetOpen(true)
+Window:SetOpen(false)
 ```
 
 ---
 
-## KeybindList
+## Pages & SubPages
 
-Creates a list overlay that shows all active keybinds in the UI.
-
-```lua
-local KeybindList = Library:KeybindList()
-```
-
-> The `KeybindList` is passed into `CreateSettingsPage` so keybinds registered on components appear here automatically.
-
----
-
-## Pages
-
-Pages are the top-level tabs in the window. Each page can have 1 or 2 columns.
+Pages appear as tabs in the left sidebar.
 
 ```lua
-local CombatPage  = Window:Page({ Name = "Combat",  SubPages = true })
-local PlayerPage  = Window:Page({ Name = "Player",  Columns = 2 })
-local VisualsPage = Window:Page({ Name = "Visuals", Columns = 2 })
-local PlayersPage = Window:Page({ Name = "Players", Columns = 2 })
+local MyPage = Window:Page({
+    Name = "Combat",
+    Columns = 2,       -- number of section columns (default: 2)
+    SubPages = false,  -- set true to use SubPages instead of columns
+})
 ```
-
-| Property | Type | Description |
-|---|---|---|
-| `Name` | `string` | The tab label shown in the window |
-| `Columns` | `number` | `1` or `2` columns layout for sections |
-| `SubPages` | `bool` | If `true`, this page uses sub-tabs instead of columns |
-
----
 
 ### SubPages
 
-When a page has `SubPages = true`, you add sub-tabs inside it instead of sections directly.
+When `SubPages = true`, the page contains a tab bar of sub-pages instead of direct columns.
 
 ```lua
-local WeaponSubPage = CombatPage:SubPage({ Name = "Weapon", Columns = 2 })
-local AimbotSubPage = CombatPage:SubPage({ Name = "Aimbot", Columns = 2 })
+local MyPage = Window:Page({ Name = "Visuals", SubPages = true })
+
+local SubPage = MyPage:SubPage({
+    Name = "ESP",
+    Columns = 2,
+})
 ```
 
-| Property | Type | Description |
-|---|---|---|
-| `Name` | `string` | The sub-tab label |
-| `Columns` | `number` | `1` or `2` column layout for sections inside this sub-page |
+### Player List Page
 
----
-
-### Settings Page
-
-Creates a built-in settings page that handles theme, config saving, and keybind list automatically.
+A special pre-built page that lists all players in the server with avatar, username, account age, and a status dropdown.
 
 ```lua
-local SettingsPage = Library:CreateSettingsPage(Window, Watermark, KeybindList)
+local Playerlist = MyPage:Playerlist({
+    Callback = function(Player, Status, Team)
+        -- fires when a player is selected
+    end
+})
 ```
-
-| Argument | Description |
-|---|---|
-| `Window` | Your main window instance |
-| `Watermark` | Your watermark instance |
-| `KeybindList` | Your keybind list instance |
 
 ---
 
 ## Sections
 
-Sections group related components inside a page or sub-page. Use `Side` to place them in column 1 or 2.
+Sections are containers inside a page column that group related elements.
 
 ```lua
-local MySection = MyPage:Section({ Name = "My Section", Side = 1 })
+local Section = MyPage:Section({
+    Name = "Aimbot",
+    Side = 1,   -- which column (1 or 2)
+})
 ```
-
-| Property | Type | Description |
-|---|---|---|
-| `Name` | `string` | The section header label |
-| `Side` | `number` | `1` = left column, `2` = right column |
 
 ---
 
 ## Components
 
-All components are created by calling methods on a **Section**.
-
----
+All components are created on a `Section` object.
 
 ### Toggle
 
-A simple on/off switch.
+A simple on/off toggle.
 
 ```lua
-local Toggle = MySection:Toggle({
-    Name = "Enabled",
-    Flag = "MyToggleFlag",
+local Toggle = Section:Toggle({
+    Name = "Enable Aimbot",
+    Flag = "AimbotEnabled",
     Default = false,
-    Callback = function(Value)
-        print(Value) -- true or false
-    end
-})
-```
-
-| Property | Type | Description |
-|---|---|---|
-| `Name` | `string` | Label shown next to the toggle |
-| `Flag` | `string` | Unique ID used to reference this value globally |
-| `Default` | `bool` | Starting value |
-| `Callback` | `function` | Called with `true`/`false` when toggled |
-| `ToolTip` | `table` | *(Optional)* Hover tooltip with `Name` and `Description` |
-
-#### ToolTip Example
-
-```lua
-MySection:Toggle({
-    Name = "Silent Aim",
-    ToolTip = {
-        Name = "Silent aim",
-        Description = "Redirects bullets to the closest target from the mouse"
+    Tooltip = {               -- optional hover tooltip
+        Name = "Aimbot",
+        Description = "Enables the aimbot"
     },
-    Flag = "SilentAimEnabled",
-    Default = false,
-    Callback = function(Value) end
-})
-```
-
-#### Methods
-
-```lua
-Toggle:Set(true)            -- Set value programmatically
-Toggle:Get()                -- Returns current boolean value
-Toggle:SetVisibility(false) -- Show or hide the toggle
-```
-
----
-
-### Slider
-
-A draggable number slider.
-
-```lua
-local Slider = MySection:Slider({
-    Name = "Speed",
-    Flag = "SpeedFlag",
-    Min = 0,
-    Max = 100,
-    Default = 16,
-    Decimals = 1,
-    Suffix = "studs/s",
     Callback = function(Value)
-        print(Value) -- number
+        print("Aimbot:", Value)
     end
 })
 ```
 
-| Property | Type | Description |
-|---|---|---|
-| `Name` | `string` | Label shown above the slider |
-| `Flag` | `string` | Unique ID for this value |
-| `Min` | `number` | Minimum value |
-| `Max` | `number` | Maximum value |
-| `Default` | `number` | Starting value |
-| `Decimals` | `number` | Step precision (e.g. `0.01` for 2 decimal places, `1` for integers) |
-| `Suffix` | `string` | Unit label displayed next to the value (e.g. `"px"`, `"s"`) |
-| `Callback` | `function` | Called with new value on change |
-
-#### Methods
-
+**Methods:**
 ```lua
-Slider:Set(50)              -- Set value programmatically
-Slider:Get()                -- Returns current number value
-Slider:SetVisibility(false) -- Show or hide the slider
+Toggle:Set(true)          -- set value programmatically
+Toggle:Get()              -- returns current boolean value
+Toggle:SetText("New Name") -- update label text
+Toggle:SetVisibility(bool) -- show/hide the element
 ```
 
----
-
-### Dropdown
-
-A select menu for choosing one or multiple options.
+Toggles can have an inline **Colorpicker** or **Keybind** attached:
 
 ```lua
-local Dropdown = MySection:Dropdown({
-    Name = "Mode",
-    Flag = "ModeFlag",
-    Items = { "Burst", "Auto", "Single" },
-    Default = "Burst",
-    Multi = false,
-    Callback = function(Value)
-        print(Value) -- string (or table if Multi = true)
-    end
+Toggle:Colorpicker({
+    Flag = "AimbotColor",
+    Default = Color3.fromRGB(255, 0, 0),
+    Alpha = 0,
+    Callback = function(Color, Alpha) end
 })
-```
 
-| Property | Type | Description |
-|---|---|---|
-| `Name` | `string` | Label shown above the dropdown |
-| `Flag` | `string` | Unique ID for this value |
-| `Items` | `table` | Array of option strings |
-| `Default` | `string` | Default selected option |
-| `Multi` | `bool` | Allow multiple selections |
-| `Callback` | `function` | Called with selected value(s) on change |
-
-#### Methods
-
-```lua
-Dropdown:Set("Auto")                     -- Set selected option
-Dropdown:Get()                           -- Returns current value
-Dropdown:Add("NewOption")                -- Add a new option
-Dropdown:Remove("Burst")                 -- Remove an option
-Dropdown:Refresh({"A","B","C"}, true)    -- Replace all options (2nd arg = reset selection)
-Dropdown:SetVisibility(false)            -- Show or hide
+Toggle:Keybind({
+    Flag = "AimbotKey",
+    Default = Enum.KeyCode.E,
+    Mode = "Toggle", -- "Toggle", "Hold", or "Always"
+    Callback = function(Active) end
+})
 ```
 
 ---
 
 ### Button
 
-A row of one or more clickable buttons inside a section.
+A row of one or more clickable buttons.
 
 ```lua
-local Button = MySection:Button()
+local Button = Section:Button()
 
-Button:Add("Apply", function()
-    print("Apply clicked")
+Button:Add("Teleport", function()
+    print("Teleport pressed")
 end)
 
 Button:Add("Reset", function()
-    print("Reset clicked")
+    print("Reset pressed")
 end)
 ```
 
-> Call `Button:Add()` once per button you want to add. Multiple calls create multiple buttons in the same row.
-
-| Argument | Type | Description |
-|---|---|---|
-| `label` | `string` | The text shown on the button |
-| `callback` | `function` | Called when the button is clicked |
-
----
-
-### Colorpicker
-
-A color picker that attaches **to an existing Toggle**. Call it as a method on a `Toggle` instance.
-
+**Methods:**
 ```lua
-local Toggle = MySection:Toggle({
-    Name = "FoV Circle",
-    Flag = "FoVEnabled",
-    Default = false,
-    Callback = function(Value) end
-})
-
-Toggle:Colorpicker({
-    Name = "FoV Color",
-    Flag = "FoVColor",
-    Default = Library.Theme.Accent, -- or Color3.fromRGB(255, 0, 0)
-    Alpha = 0,
-    Callback = function(Value)
-        print(Value) -- Color3
-    end
-})
-```
-
-| Property | Type | Description |
-|---|---|---|
-| `Name` | `string` | Label for the color picker |
-| `Flag` | `string` | Unique ID for this color value |
-| `Default` | `Color3` | Default color |
-| `Alpha` | `number` | Starting alpha/transparency (`0`–`1`) |
-| `Callback` | `function` | Called with `Color3` on change |
-
-> You can attach **multiple** colorpickers to one toggle (e.g. fill color + outline color).
-
-#### Methods
-
-```lua
-Colorpicker:Set(Color3.fromRGB(255, 0, 0))        -- Set color
-Colorpicker:Set(Color3.fromRGB(255, 0, 0), 0.5)   -- Set color + alpha
-Colorpicker:Get()                                  -- Returns Color3
-Colorpicker:SetVisibility(false)                   -- Show or hide
-Colorpicker:SlidePalette(InputObject)
-Colorpicker:SlideHue(InputObject)
-Colorpicker:SlideAlpha(InputObject)
-Colorpicker:Update(bool, bool)
+Button:SetVisibility(bool)
 ```
 
 ---
 
-### Keybind
+### Slider
 
-A keybind picker that attaches **to an existing Toggle**. Appears inline next to the toggle.
+A draggable value slider.
 
 ```lua
-MySection:Toggle({
-    Name = "Aimbot",
-    Flag = "AimbotEnabled",
-    Default = false,
-    Callback = function(Value) end
-}):Keybind({
-    Flag = "AimbotKeybind",
-    Default = Enum.KeyCode.E,
-    Mode = "Toggle",
+local Slider = Section:Slider({
+    Name = "FOV",
+    Flag = "AimbotFOV",
+    Min = 0,
+    Max = 360,
+    Default = 90,
+    Decimals = 1,       -- rounding precision
+    Suffix = "°",       -- appended to value display
     Callback = function(Value)
-        print(Value)
+        print("FOV:", Value)
     end
 })
 ```
 
-| Property | Type | Description |
-|---|---|---|
-| `Flag` | `string` | Unique ID for this keybind |
-| `Default` | `Enum.KeyCode` | Default key |
-| `Mode` | `string` | `"Toggle"` or `"Hold"` |
-| `Callback` | `function` | Called when key is pressed |
+**Methods:**
+```lua
+Slider:Set(120)        -- set value programmatically
+Slider:Get()           -- returns current number value
+Slider:SetVisibility(bool)
+```
 
-#### Methods
+---
+
+### Dropdown
+
+A single or multi-select dropdown menu.
 
 ```lua
-Keybind:Get()              -- Returns Key, Mode, Toggled
-Keybind:Set(Enum.KeyCode.F) -- Set a new key
-Keybind:SetMode("Hold")    -- Change mode
-Keybind:Press()            -- Simulate a key press
+local Dropdown = Section:Dropdown({
+    Name = "Aim Part",
+    Flag = "AimbotPart",
+    Items = { "Head", "Torso", "HumanoidRootPart" },
+    Default = "Head",
+    Multi = false,
+    Callback = function(Value)
+        print("Selected:", Value)
+    end
+})
+```
+
+**Methods:**
+```lua
+Dropdown:Set("Torso")           -- set selected option
+Dropdown:Get()                   -- returns current value (string or table if Multi)
+Dropdown:Add("NewOption")        -- add an option at runtime
+Dropdown:Remove("OldOption")     -- remove an option
+Dropdown:Refresh({ "A", "B" })  -- replace all options
+Dropdown:SetVisibility(bool)
 ```
 
 ---
 
 ### Searchbox
 
-A dropdown with a live search/filter input. Useful for large item lists.
+A listbox with a live search/filter input. Good for large lists.
 
 ```lua
-local Searchbox = MySection:Searchbox({
-    Name = "Target Bone",
-    Flag = "SearchboxFlag",
-    Items = { "Head", "Torso", "LeftArm", "RightArm", "LeftLeg", "RightLeg" },
-    Default = "Head",
+local Searchbox = Section:Searchbox({
+    Name = "PlayerSelect",
+    Flag = "SelectedPlayer",
+    Items = { "Player1", "Player2", "Player3" },
     Multi = false,
+    Default = nil,
     Callback = function(Value)
-        print(Value)
+        print("Selected:", Value)
     end
 })
 ```
 
-| Property | Type | Description |
-|---|---|---|
-| `Name` | `string` | Label shown above the searchbox |
-| `Flag` | `string` | Unique ID for this value |
-| `Items` | `table` | Array of option strings |
-| `Default` | `string` | Default selected option |
-| `Multi` | `bool` | Allow multiple selections |
-| `Callback` | `function` | Called with selected value on change |
-
-#### Methods
-
-```lua
-Searchbox:Set("Torso")                  -- Set selected option
-Searchbox:Get()                         -- Returns current value
-Searchbox:Add("Neck")                   -- Add an option
-Searchbox:Remove("Head")                -- Remove an option
-Searchbox:Refresh({"A","B"}, true)      -- Replace options
-Searchbox:SetVisibility(false)          -- Show or hide
-```
+Supports the same `Add`, `Remove`, `Refresh`, `Set`, and `Get` methods as Dropdown.
 
 ---
 
-### Playerlist
+### Textbox
 
-A live player list component for a page. Callbacks fire when a player is selected or interacted with.
+A text input field.
 
 ```lua
-local Playerlist = PlayersPage:Playerlist({
-    Callback = function(...)
-        local Args = { ... }
-        table.foreach(Args, print)
+local Textbox = Section:Textbox({
+    Name = "Custom Tag",
+    Flag = "PlayerTag",
+    Default = "",
+    Placeholder = "Enter tag...",
+    Numeric = false,    -- if true, only allows numbers
+    Finished = false,   -- if true, callback fires only on Enter
+    Callback = function(Value)
+        print("Tag:", Value)
     end
 })
 ```
 
----
-
-## Notifications
-
-Display a temporary toast notification on screen.
-
+**Methods:**
 ```lua
-Library:Notification("Title", "Description text here", 5)
-```
-
-| Argument | Type | Description |
-|---|---|---|
-| `title` | `string` | Bold header of the notification |
-| `description` | `string` | Body text |
-| `duration` | `number` | Seconds before the notification disappears |
-
-#### Example — Load Time Notification
-
-```lua
-local LoadTick = os.clock()
-
--- ... your UI setup code ...
-
-Library:Notification(
-    "Loaded!",
-    "Menu took " .. string.format("%.4f", os.clock() - LoadTick) .. " seconds to load",
-    5
-)
+Textbox:Set("hello")
+Textbox:Get()
+Textbox:SetVisibility(bool)
 ```
 
 ---
 
-## Full Boilerplate
+### Label
 
-A minimal starting template with one page, one section, and a few components.
+A static text label. Can optionally have an inline Colorpicker or Keybind.
 
 ```lua
-local Library = loadstring(game:HttpGet("https://raw.githubusercontent.com/QM80/APEX-UI-LIB/refs/heads/main/main/src/uilibrary.luau"))()
+local Label = Section:Label("Player Info")
 
--- Window
-local Window = Library:Window({
-    FadeTime = 0.3,
-    UITitle = "My Script",
+-- With a tooltip:
+local Label = Section:Label("Player Info", {
+    Name = "Info",
+    Description = "Displays player information"
+})
+```
+
+**Methods:**
+```lua
+Label:SetText("New Text")
+Label:SetVisibility(bool)
+
+-- Inline Colorpicker
+Label:Colorpicker({
+    Flag = "ESPColor",
+    Default = Color3.fromRGB(255, 255, 255),
+    Alpha = 0,
+    Callback = function(Color, Alpha) end
 })
 
--- Watermark & Keybinds
-local Watermark = Library:Watermark("Loading...")
+-- Inline Keybind
+Label:Keybind({
+    Flag = "ESPKey",
+    Default = Enum.KeyCode.H,
+    Mode = "Toggle",
+    Callback = function(Active) end
+})
+```
+
+---
+
+### Colorpicker
+
+A full color picker with HSV palette, hue bar, alpha slider, and optional animation/other tabs.
+
+Colorpickers are typically created inline on a `Toggle` or `Label` (see above). When created this way, `Pages = true` enables the Color / Animations / Other tab system.
+
+**Methods:**
+```lua
+Colorpicker:Set(Color3.fromRGB(255, 0, 0), 0)  -- set color and alpha
+Colorpicker:Get()  -- returns Color3 value
+```
+
+---
+
+### Keybind
+
+A key binding element. Left-click to pick a key, right-click for mode selection.
+
+Keybinds are typically created inline on a `Toggle` or `Label` (see above).
+
+**Modes:**
+- `Toggle` — fires callback each press, alternating true/false
+- `Hold` — true while key held, false on release
+- `Always` — always true while active
+
+**Methods:**
+```lua
+Keybind:Set({ Key = "Enum.KeyCode.E", Mode = "Hold" })
+Keybind:Get()          -- returns key, mode, toggled state
+Keybind:SetMode("Hold")
+Keybind:SetOpen(bool)  -- open/close the mode picker popup
+```
+
+---
+
+## Extras
+
+### Watermark
+
+A small draggable HUD element displayed at the bottom of the screen.
+
+```lua
+local Watermark = Library:Watermark("MyScript | v1.0")
+
+Watermark:SetText("MyScript | v1.0 | 144 FPS")
+Watermark:SetVisibility(true)
+```
+
+---
+
+### Keybind List
+
+Displays a list of active keybinds on-screen. Automatically populated when Keybind elements are created.
+
+```lua
 local KeybindList = Library:KeybindList()
 
--- Settings page (built-in)
-local SettingsPage = Library:CreateSettingsPage(Window, Watermark, KeybindList)
-
--- Pages
-local MainPage = Window:Page({ Name = "Main", Columns = 2 })
-
--- Sections
-local MainSection = MainPage:Section({ Name = "General", Side = 1 })
-
--- Components
-MainSection:Toggle({
-    Name = "My Feature",
-    Flag = "MyFeatureEnabled",
-    Default = false,
-    Callback = function(Value)
-        print("My Feature:", Value)
-    end
-})
-
-MainSection:Slider({
-    Name = "Speed",
-    Flag = "MyFeatureSpeed",
-    Min = 0, Max = 100, Default = 16,
-    Decimals = 1, Suffix = "studs/s",
-    Callback = function(Value)
-        print("Speed:", Value)
-    end
-})
-
--- Notification on load
-local LoadTick = os.clock()
-Library:Notification("Loaded!", "Took " .. string.format("%.4f", os.clock() - LoadTick) .. "s", 5)
+KeybindList:SetVisibility(true)
 ```
 
 ---
 
-> **Tip:** Every `Flag` string must be **unique** across your entire script. Flags are used internally to save/load config values.
+### Notifications
+
+Sends a temporary toast notification to the bottom-right of the screen.
+
+```lua
+Library:Notification("Title", "Description text here", 5) -- 5 = duration in seconds
+```
+
+---
+
+### Settings Page
+
+Creates a pre-built Settings page with theming, config management, and general settings tabs.
+
+```lua
+local SettingsPage = Library:CreateSettingsPage(Window, Watermark, KeybindList)
+```
+
+This automatically adds:
+- **Theming** — live color pickers for every theme color
+- **Configs** — save, load, create, and delete config files
+- **Settings** — toggle watermark/keybind list, adjust tween/fade speed, change menu keybind, unload
+
+---
+
+## Theming
+
+The default theme colors and their keys:
+
+| Key | Default |
+|---|---|
+| `Background` | `#101214` |
+| `Border` | `#252824` |
+| `Inline` | `#101214` |
+| `Page Background` | `#101214` |
+| `Outline` | `#252824` |
+| `Element` | `#17191B` |
+| `Gradient` | `RGB(208, 208, 208)` |
+| `Text` | `#EDEFF1` |
+| `Text Stroke` | `#000000` |
+| `Placeholder Text` | `#b9b9b9` |
+| `Accent` | `#854EAC` |
+
+Change a theme color at runtime:
+
+```lua
+Library:ChangeTheme("Accent", Color3.fromRGB(255, 100, 0))
+```
+
+---
+
+## Flags & Config System
+
+Every interactive element has a `Flag` string that maps to a value in `Library.Flags`.
+
+```lua
+print(Library.Flags["AimbotEnabled"])  -- true/false
+print(Library.Flags["AimbotFOV"])      -- number
+print(Library.Flags["AimbotPart"])     -- string or table
+```
+
+### Saving a Config
+
+```lua
+local json = Library:GetConfig()
+writefile("config.json", json)
+```
+
+### Loading a Config
+
+```lua
+local json = readfile("config.json")
+Library:LoadConfig(json)
+```
+
+### Deleting a Config
+
+```lua
+Library:DeleteConfig("config.json")
+```
+
+---
+
+## Unloading
+
+Cleanly disconnects all connections, closes threads, and destroys all UI.
+
+```lua
+Library:Unload()
+```
+
+After calling this, `Library` and `getgenv().Library` are set to `nil`.
+
+---
+
+## Menu Keybind
+
+Default toggle keybind is `RightControl`. Change it at any time:
+
+```lua
+Library.MenuKeybind = tostring(Enum.KeyCode.Insert)
+```
+
+---
+
+## Full Example
+
+```lua
+Library:SetFolder("MyScript")
+
+local Window = Library:Window({
+    UITitle = "MyScript",
+    FadeTime = 0.3,
+})
+
+local Watermark  = Library:Watermark("MyScript | v1.0")
+local KeybindList = Library:KeybindList()
+
+local CombatPage = Window:Page({ Name = "Combat", Columns = 2 })
+
+local AimbotSection = CombatPage:Section({ Name = "Aimbot", Side = 1 })
+
+local AimbotToggle = AimbotSection:Toggle({
+    Name = "Enable Aimbot",
+    Flag = "AimbotEnabled",
+    Default = false,
+    Callback = function(Value)
+        -- your code here
+    end
+})
+
+AimbotToggle:Colorpicker({
+    Flag = "AimbotColor",
+    Default = Color3.fromRGB(255, 0, 0),
+    Alpha = 0,
+})
+
+AimbotToggle:Keybind({
+    Flag = "AimbotKey",
+    Default = Enum.KeyCode.E,
+    Mode = "Toggle",
+})
+
+AimbotSection:Slider({
+    Name = "FOV",
+    Flag = "AimbotFOV",
+    Min = 0,
+    Max = 360,
+    Default = 90,
+    Suffix = "°",
+    Callback = function(Value) end
+})
+
+AimbotSection:Dropdown({
+    Name = "Aim Part",
+    Flag = "AimbotPart",
+    Items = { "Head", "Torso" },
+    Default = "Head",
+    Callback = function(Value) end
+})
+
+Library:CreateSettingsPage(Window, Watermark, KeybindList)
+```
